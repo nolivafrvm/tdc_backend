@@ -2,6 +2,7 @@ package com.tdc.sensorApp.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 import javax.persistence.*;
 import java.util.HashSet;
@@ -9,8 +10,9 @@ import java.util.Set;
 
 @Data
 @Entity
-@Table(name="tb_usuario")
+@Table(name = "tb_usuario")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@RequiredArgsConstructor
 public class Usuario {
 
     public Usuario(String usuario, String email, String password) {

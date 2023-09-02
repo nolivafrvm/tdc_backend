@@ -17,4 +17,6 @@ public interface DeviceService {
     Device get(Long id);
 
     Device findFirstByOrderByIdAsc();
+
+    void configurarDispositivo(Device device);
 }

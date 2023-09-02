@@ -5,9 +5,6 @@ import com.tdc.sensorApp.services.DeviceService;
 import com.tdc.sensorApp.utils.ErrorMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -15,14 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/device")
+@RequestMapping("/api/dispositivo")
 @RequiredArgsConstructor
 public class DeviceController {
 
@@ -31,7 +25,7 @@ public class DeviceController {
     // ---------- Retrieve all Devices ----------
 
     @GetMapping
-    public ResponseEntity<List<Device>> listAllDatos() {
+    public ResponseEntity<List<Device>> listAllDevices() {
         log.info("Retrieve all devices");
         List<Device> devices = deviceService.findAll();
         if (devices.isEmpty()) {
@@ -41,57 +35,72 @@ public class DeviceController {
     }
 
     @GetMapping("/{idDevice}")
-    public ResponseEntity<Device> findDatoById(@PathVariable("idDevice") Long id) {
-        Device Device = deviceService.get(id);
+    public ResponseEntity<Device> findDeviceById(@PathVariable("idDevice") String idDevice) {
+        Device device = deviceService.get(Long.valueOf(idDevice));
         log.info("Retrieve single Device");
-        if (Device == null) {
-            log.info("Device with id {} not found");
+        if (device == null) {
+            log.info("Device with id {} not found", idDevice);
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(Device);
+        return ResponseEntity.ok(device);
+    }
+
+
+    @GetMapping("/configurar/{idDevice}")
+    public ResponseEntity<Device> configurarDispositivo(@PathVariable("idDevice") String idDevice) {
+        Device device = deviceService.get(Long.valueOf(idDevice));
+        log.info("Retrieve single Device");
+        if (device == null) {
+            log.info("Device with id {} not found", idDevice);
+            return ResponseEntity.notFound().build();
+        }
+        deviceService.configurarDispositivo(device);
+        ResponseEntity.ok().build();
+
+        return ResponseEntity.ok(device);
     }
 
     // ---------- Create Device -----------
 
     @PostMapping
-    public ResponseEntity<Device> createDato(@Valid @RequestBody Device Device, BindingResult result) {
+    public ResponseEntity<Device> createDevice(@Valid @RequestBody Device Device, BindingResult result) {
         log.info("Creating a new Device");
         if (result.hasErrors()) {
             log.info("Error at create a new Device");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ErrorMessage.formatMessage(result));
         }
         log.info("Device Created");
-        Device datoDb = deviceService.create(Device);
-        return ResponseEntity.status(HttpStatus.CREATED).body(datoDb);
+        Device deviceDb = deviceService.create(Device);
+        return ResponseEntity.status(HttpStatus.CREATED).body(deviceDb);
     }
 
     // ---------- Updating Device -----------
 
     @PutMapping("/{id}")
-    public ResponseEntity<Device> updateDato(@PathVariable("id") long id, @RequestBody Device Device) {
+    public ResponseEntity<Device> updateDevice(@PathVariable("id") long id, @RequestBody Device device) {
         log.info("Updating a Device");
-        Device DatoDb = deviceService.get(id);
-        if (DatoDb == null) {
+        Device deviceDb = deviceService.get(id);
+        if (deviceDb == null) {
             log.info("Unable to update Device, not exist id {}", id);
             return ResponseEntity.notFound().build();
         }
-        Device.setIdDevice(id);
-        DatoDb = deviceService.update(Device);
-        return ResponseEntity.ok(DatoDb);
+        device.setIdDevice(id);
+        deviceDb = deviceService.update(device);
+        return ResponseEntity.ok(deviceDb);
     }
 
     // ---------- Deleting Device -----------
 
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Device> deleteDato(@PathVariable("id") long id) {
+    public ResponseEntity<Device> deleteDevice(@PathVariable("id") long id) {
         log.info("Fetch and deleting Customer with id {}", id);
-        Device Device = deviceService.get(id);
-        if (Device == null) {
+        Device device = deviceService.get(id);
+        if (device == null) {
             log.info("Can not delete non-exist entity with id {}", id);
             return ResponseEntity.notFound().build();
         }
-        deviceService.delete(Device);
-        return ResponseEntity.ok(Device);
+        deviceService.delete(device);
+        return ResponseEntity.ok(device);
     }
 
 }

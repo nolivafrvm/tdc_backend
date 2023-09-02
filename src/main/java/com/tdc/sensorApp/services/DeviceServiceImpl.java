@@ -2,6 +2,7 @@ package com.tdc.sensorApp.services;
 
 import com.tdc.sensorApp.entities.Device;
 import com.tdc.sensorApp.entities.repositories.DeviceRepository;
+import com.tdc.sensorApp.services.socket.SocketTcp;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,9 +10,17 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class DeviceServiceImpl implements DeviceService{
+public class DeviceServiceImpl implements DeviceService {
+
+    private static final String ACTION_SAVE = "1";
+    private static final String ACTION_RESET = "2";
+    private static final String ACTION_RELAY_ON = "3";
+    private static final String ACTION_RELAY_OFF = "4";
+    private static final String ACTION_GET_VALUE = "5";
 
     private final DeviceRepository deviceRepository;
+
+    private final SocketTcp socketTcp;
 
     @Override
     public List<Device> findAll() {
@@ -46,4 +55,11 @@ public class DeviceServiceImpl implements DeviceService{
     public Device findFirstByOrderByIdAsc() {
         return null;
     }
+
+    @Override
+    public void configurarDispositivo(Device device) {
+        socketTcp.enviarPaquete(device, "1");
+    }
+
+
 }

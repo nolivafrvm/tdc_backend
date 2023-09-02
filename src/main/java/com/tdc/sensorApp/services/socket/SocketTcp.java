@@ -1,10 +1,9 @@
 package com.tdc.sensorApp.services.socket;
 
+import com.tdc.sensorApp.entities.Device;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,28 +48,25 @@ public class SocketTcp {
         }
     }
 
-    private void enviarPaquete() {
-        String serverIp = "localhost"; // Arduino Dir
-        int serverPort = 3000;
+    public void enviarPaquete(Device device, String actionControl) {
+        String serverIp = device.getIpaddress();
+        int serverPort = device.getPort();
 
         try (Socket socket = new Socket(serverIp, serverPort)) {
             System.out.println("Conectado al servidor en " + serverIp + ":" + serverPort);
 
-            // Obtener el flujo de salida del socket para enviar datos
             OutputStream outputStream = socket.getOutputStream();
 
-            // Mensaje que deseas enviar
-            String message = "Hola desde el cliente TCP";
-            byte[] messageBytes = message.getBytes();
+            String message = buildMessage(device, actionControl);
 
-            // Enviar el mensaje
+            byte[] messageBytes = message.getBytes();
             outputStream.write(messageBytes);
 
             // Acciones
             // 1. Actualizar/Guardar los datos del dispositivo ( Kp, Ki, Kd, SetPoint)
             // 2. Reiniciar.
             // 3. Mover el relay
-            String action = getAction() ;
+            String action = actionControl;
 
             System.out.println("Mensaje enviado: " + message);
 
@@ -79,7 +75,28 @@ public class SocketTcp {
         }
     }
 
-    private String getAction() {
-        return null;
+    private String buildMessage(Device device, String action) {
+        StringBuilder chainValue = new StringBuilder();
+        if (device != null) {
+            chainValue
+                    .append(action)
+                    .append(";")
+                    .append(device.getKd())
+                    .append(";")
+                    .append(device.getKp())
+                    .append(";")
+                    .append(device.getKi())
+                    .append(";")
+                    .append(device.getSetpoint())
+                    .append(";")
+                    .append(device.getIpaddressserver())
+                    .append(";")
+                    .append(device.getPortserver())
+                    .append(";")
+                    .append(device.getIpaddress())
+                    .append(";")
+                    .append(device.getPort());
+        }
+        return chainValue.toString();
     }
 }
