@@ -8,17 +8,17 @@ import java.util.List;
 
 public interface DatoService {
 
-    public List<Dato> findAll();
+    List<Dato> findAll();
 
-    public Dato create(Dato dato);
+    Dato create(Dato dato);
 
-    public Dato update(Dato dato);
+    Dato update(Dato dato);
 
-    public void delete(Dato dato);
+    void delete(Dato dato);
 
-    public Dato get(Long id);
+    Dato get(Long id);
 
-    public Dato findFirstByOrderByIdAsc();
+    Dato findFirstByOrderByIdAsc();
 
     public List<Dato> findAllByFechaBetween(LocalDateTime fechaInicio,
                                             LocalDateTime fechaFin, Pageable pageable);

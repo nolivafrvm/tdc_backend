@@ -2,6 +2,7 @@ package com.tdc.sensorApp.controller;
 
 import com.tdc.sensorApp.entities.Dato;
 import com.tdc.sensorApp.services.DatoService;
+import com.tdc.sensorApp.services.socket.SocketTcp;
 import com.tdc.sensorApp.utils.ErrorMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +28,6 @@ import java.util.List;
 public class DatoController {
 
     private final DatoService datoService;
-
-//    private final SocketTcp socketTcp;
 
     // ---------- Retrieve all Datos ----------
 
