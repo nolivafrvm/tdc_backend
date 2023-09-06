@@ -1,6 +1,10 @@
 package com.tdc.sensorApp.services.socket;
 
+import com.tdc.sensorApp.entities.Dato;
 import com.tdc.sensorApp.entities.Device;
+import com.tdc.sensorApp.services.DatoService;
+import com.tdc.sensorApp.services.EmailService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -9,9 +13,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.time.LocalDateTime;
 
 @Component
+@RequiredArgsConstructor
 public class SocketTcp {
+
+    private final EmailService emailService;
+
+    private final DatoService datoService;
 
     @Async("threadPoolTaskExecutor")
     public void startServer() {
@@ -31,15 +41,30 @@ public class SocketTcp {
                 // Leer los datos del flujo de entrada
                 int bytesRead;
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
-                    // Convertir los datos en una cadena (asumiendo que son datos de texto)
+
                     String receivedData = new String(buffer, 0, bytesRead);
                     System.out.println("Datos recibidos: " + receivedData);
 
-                    // Aquí puedes procesar los datos recibidos según tus necesidades
-
+                    String[] values = receivedData.split(";");
+                    if (values.length > 0) {
+                        String action = values[0];
+                        switch (action) {
+                            case "1":
+                                // Salvar datos
+                                Dato dato = buildDato(values);
+                                if (dato != null) {
+                                    datoService.create(dato);
+                                }
+                                break;
+                            case "2":
+                                // Notificar alguna incidencia
+                                sendNotification(values[1]);
+                                break;
+                            default:
+                                System.out.println("not action detected");
+                        }
+                    }
                 }
-
-                // Cierra el socket del cliente cuando termines de recibir datos
                 clientSocket.close();
 
             }
@@ -48,25 +73,38 @@ public class SocketTcp {
         }
     }
 
-    public void enviarPaquete(Device device, String actionControl) {
+    public void controlarDispositivo(Device device, String actionControl) {
         String serverIp = device.getIpaddress();
         int serverPort = device.getPort();
-
+        System.out.println("Conectando a arduino en " + serverIp + ":" + serverPort);
         try (Socket socket = new Socket(serverIp, serverPort)) {
-            System.out.println("Conectado al servidor en " + serverIp + ":" + serverPort);
-
             OutputStream outputStream = socket.getOutputStream();
 
-            String message = buildMessage(device, actionControl);
+            String message = "";
+
+            switch (actionControl) {
+                case "1":
+                    message = buildMessage(device, actionControl);
+                    break;
+                case "2":
+                    message = "2"; // Relay ON
+                    break;
+                case "3":
+                    message = "3"; // Relay OFF
+                    break;
+                case "4":
+                    message = "4"; // Relay OFF
+                    break;
+                default:
+                    System.out.println("Not action detected");
+            }
+
+            if (message.isEmpty()) {
+                throw new RuntimeException("Does not have any action");
+            }
 
             byte[] messageBytes = message.getBytes();
             outputStream.write(messageBytes);
-
-            // Acciones
-            // 1. Actualizar/Guardar los datos del dispositivo ( Kp, Ki, Kd, SetPoint)
-            // 2. Reiniciar.
-            // 3. Mover el relay
-            String action = actionControl;
 
             System.out.println("Mensaje enviado: " + message);
 
@@ -76,6 +114,7 @@ public class SocketTcp {
     }
 
     private String buildMessage(Device device, String action) {
+        // Protocolo de comunicacion -> action;kd;kp;ki;setpoint;ipaddressserver;portServer;ipaddress;port;idConfig
         StringBuilder chainValue = new StringBuilder();
         if (device != null) {
             chainValue
@@ -95,8 +134,40 @@ public class SocketTcp {
                     .append(";")
                     .append(device.getIpaddress())
                     .append(";")
-                    .append(device.getPort());
+                    .append(device.getPort())
+                    .append(";")
+                    .append(device.getIdConfiguracion());
         }
         return chainValue.toString();
+    }
+
+    // Protocolo de comunicacion (Recibo de Arduino) -> action;value;outputPid;Rpm;kp;kd;ki;setPoint;idConfiguration;idDispositivo
+    private Dato buildDato(String[] values) {
+        Dato dato = new Dato();
+        dato.setFecha(LocalDateTime.now());
+        dato.setValor(values[1]);
+        dato.setOutputPid(values[2]);
+        dato.setRpm(values[3]);
+        dato.setKp(values[4]);
+        dato.setKd(values[5]);
+        dato.setKi(values[6]);
+        dato.setSetpoint(values[7]);
+        dato.setPorcentaje(values[8]);
+        dato.setIdConfiguration(values[9]);
+
+        Device device = new Device();
+        device.setIdDevice(Long.parseLong(values[10]));
+
+        dato.setDispositivo(device);
+
+        return dato;
+    }
+
+    private void sendNotification(String notification) {
+        // Protocolo de comunicacion (Recibo de Arduino) -> action;notificacion
+        System.out.println("Sending email " + notification);
+        emailService.sendSimpleMessage("nicolas.oliva@hab.com.ar", "nicolas.oliva@hab.com.ar", "Notification Arduino", notification);
+
+
     }
 }

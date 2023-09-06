@@ -1,7 +1,11 @@
 package com.tdc.sensorApp.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tdc.sensorApp.entities.Dato;
 import com.tdc.sensorApp.entities.repositories.DatoRepository;
+import com.tdc.sensorApp.services.websocket.AppWebsocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,8 +21,10 @@ import java.util.List;
 public class DatoServiceImpl implements DatoService {
 
     private final DatoRepository datoRepository;
+    private final AppWebsocketHandler websocketHandler;
 
     private final NovedadService novedadService;
+
 
     @Value("${spring.app.diferencia.novedad}")
     private Double diferenciaNovedad;
@@ -36,6 +42,13 @@ public class DatoServiceImpl implements DatoService {
 
     @Override
     public Dato create(Dato dato) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            objectMapper.registerModule(new JavaTimeModule());
+            websocketHandler.sendMessageToClients(objectMapper.writeValueAsString(dato));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
         return datoRepository.save(dato);
     }
 

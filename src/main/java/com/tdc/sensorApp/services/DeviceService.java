@@ -18,5 +18,5 @@ public interface DeviceService {
 
     Device findFirstByOrderByIdAsc();
 
-    void configurarDispositivo(Device device);
+    void controlarDispositivo(Device device, String action);
 }

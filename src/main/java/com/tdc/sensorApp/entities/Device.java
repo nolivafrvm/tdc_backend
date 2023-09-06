@@ -21,10 +21,13 @@ public class Device implements Serializable {
     private Float kd;
     private Float ki;
     private String ipaddress;
+    private String gateway;
+    private String subMask;
     private Integer port;
     private Float setpoint;
     private String ipaddressserver;
     private Integer portserver;
     private Long recordPeriod;
+    private Integer idConfiguracion;
 
 }

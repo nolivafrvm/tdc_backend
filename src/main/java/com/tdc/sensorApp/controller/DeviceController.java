@@ -45,20 +45,21 @@ public class DeviceController {
         return ResponseEntity.ok(device);
     }
 
-
-    @GetMapping("/configurar/{idDevice}")
-    public ResponseEntity<Device> configurarDispositivo(@PathVariable("idDevice") String idDevice) {
+    // Configurar dispositivo
+    @GetMapping("/configurar/{idDevice}/{action}")
+    public ResponseEntity<Device> configurarDispositivo(@PathVariable("idDevice") String idDevice, @PathVariable("action") String action) {
         Device device = deviceService.get(Long.valueOf(idDevice));
         log.info("Retrieve single Device");
         if (device == null) {
             log.info("Device with id {} not found", idDevice);
             return ResponseEntity.notFound().build();
         }
-        deviceService.configurarDispositivo(device);
+        deviceService.controlarDispositivo(device, action);
         ResponseEntity.ok().build();
 
         return ResponseEntity.ok(device);
     }
+
 
     // ---------- Create Device -----------
 

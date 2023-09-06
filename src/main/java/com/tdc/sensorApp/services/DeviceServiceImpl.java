@@ -29,14 +29,16 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Override
     public Device create(Device device) {
+        device.setIdConfiguracion(1);
         return deviceRepository.save(device);
     }
 
     @Override
     public Device update(Device device) {
-        if (!deviceRepository.existsById(device.getIdDevice())) {
-            System.out.println("Device does not exist");
-            throw new RuntimeException();
+        if (device.getIdConfiguracion() != null) {
+            device.setIdConfiguracion(device.getIdConfiguracion() + 1);
+        } else {
+            device.setIdConfiguracion(1);
         }
         return deviceRepository.save(device);
     }
@@ -57,8 +59,8 @@ public class DeviceServiceImpl implements DeviceService {
     }
 
     @Override
-    public void configurarDispositivo(Device device) {
-        socketTcp.enviarPaquete(device, "1");
+    public void controlarDispositivo(Device device, String action) {
+        socketTcp.controlarDispositivo(device, action);
     }
 
 
