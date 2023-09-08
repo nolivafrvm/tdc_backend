@@ -14,12 +14,6 @@ public class Novedad {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idNovedad;
 
-    private String valorActual;
-
-    private String valorAnterior;
-
-    private Double diferencia;
-
     private LocalDateTime fecha;
 
     private String descripcion;

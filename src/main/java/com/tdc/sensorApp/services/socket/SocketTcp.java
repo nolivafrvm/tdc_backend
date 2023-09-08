@@ -2,8 +2,10 @@ package com.tdc.sensorApp.services.socket;
 
 import com.tdc.sensorApp.entities.Dato;
 import com.tdc.sensorApp.entities.Device;
+import com.tdc.sensorApp.entities.Novedad;
 import com.tdc.sensorApp.services.DatoService;
 import com.tdc.sensorApp.services.EmailService;
+import com.tdc.sensorApp.services.NovedadService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -22,6 +24,8 @@ public class SocketTcp {
     private final EmailService emailService;
 
     private final DatoService datoService;
+
+    private final NovedadService novedadService;
 
     @Async("threadPoolTaskExecutor")
     public void startServer() {
@@ -56,12 +60,11 @@ public class SocketTcp {
                                     datoService.create(dato);
                                 }
                                 break;
-                            case "2":
-                                // Notificar alguna incidencia
-                                sendNotification(values[1]);
-                                break;
                             default:
+                                // Notificar alguna incidencia // Agregar novedad
+                                sendNotification(values[1]);
                                 System.out.println("not action detected");
+                                break;
                         }
                     }
                 }
@@ -120,9 +123,9 @@ public class SocketTcp {
             chainValue
                     .append(action)
                     .append(";")
-                    .append(device.getKd())
-                    .append(";")
                     .append(device.getKp())
+                    .append(";")
+                    .append(device.getKd())
                     .append(";")
                     .append(device.getKi())
                     .append(";")
@@ -163,11 +166,24 @@ public class SocketTcp {
         return dato;
     }
 
+    private Novedad buildNovedad(String descripcion) {
+        Novedad novedad = new Novedad();
+        novedad.setDescripcion(descripcion);
+        novedad.setFecha(LocalDateTime.now());
+
+        return novedad;
+    }
+
     private void sendNotification(String notification) {
         // Protocolo de comunicacion (Recibo de Arduino) -> action;notificacion
+        Novedad novedad = buildNovedad(notification);
+        novedadService.create(novedad);
         System.out.println("Sending email " + notification);
-        emailService.sendSimpleMessage("nicolas.oliva@hab.com.ar", "nicolas.oliva@hab.com.ar", "Notification Arduino", notification);
-
+        try {
+            emailService.sendSimpleMessage("nicolas.oliva@hab.com.ar", "nicolas.oliva@hab.com.ar", "Notification Arduino", notification);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 }

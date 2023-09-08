@@ -5,13 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.tdc.sensorApp.entities.Dato;
 import com.tdc.sensorApp.entities.repositories.DatoRepository;
-import com.tdc.sensorApp.services.websocket.AppWebsocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,10 +21,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DatoServiceImpl implements DatoService {
 
+    public static final int TIME_TO_SAVE = 60;
     private final DatoRepository datoRepository;
-    private final AppWebsocketHandler websocketHandler;
 
     private final NovedadService novedadService;
+
+    private final SimpMessagingTemplate messagingTemplate;
 
 
     @Value("${spring.app.diferencia.novedad}")
@@ -42,10 +45,17 @@ public class DatoServiceImpl implements DatoService {
 
     @Override
     public Dato create(Dato dato) {
-        ObjectMapper objectMapper = new ObjectMapper();
+
         try {
+            ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
-            websocketHandler.sendMessageToClients(objectMapper.writeValueAsString(dato));
+            messagingTemplate.convertAndSend("/topic/nuevoDato", objectMapper.writeValueAsString(dato));
+            Dato lastDato = datoRepository.findFirstByOrderByIdDatoDesc();
+            if (lastDato != null) {
+                if (Math.abs(Duration.between(dato.getFecha(), lastDato.getFecha()).getSeconds()) < TIME_TO_SAVE) {
+                    return null;
+                }
+            }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

@@ -1,5 +1,6 @@
 package com.tdc.sensorApp.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -14,6 +15,7 @@ public class Dato {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idDato;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime fecha;
 
     private String valor; // Temperatura actual
